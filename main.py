@@ -2,6 +2,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
 import os 
+import re
 
 class Menu:
     #Select file type
@@ -23,8 +24,9 @@ class Menu:
         print('1. Final Single Point Energy')
         print('2. Geometry Optimization Step Plot')
         print('3. Final Molecular Orbital Energies')
+        print('4. Loewdin Atomic Charges')
 
-        choice = input('Enter Choice (1 - 3): ')
+        choice = input('Enter Choice (1 - 4): ')
         return choice
 
 
@@ -87,7 +89,41 @@ class ORCAFileProcessor:
             print(df)
         else:
             print('Orbital energies table not found in the file.')
-  
+
+
+    #Get Lowedin Atomic Charges
+    @staticmethod
+    def get_loewdin_charges(file_path):
+        with open(file_path, 'r') as file:
+
+            file_contents = file.readlines()
+            table_start = False
+            table_end = False
+            table_lines = []
+
+            for i, line in enumerate(file_contents):
+                line = line.strip()
+
+                #Find the start of the table
+                if line == 'LOEWDIN ATOMIC CHARGES' and file_contents[i+1].strip() == '----------------------':
+                    table_start = True
+                    continue
+                
+                #Check for the end of the table
+                elif line == '-------------------------------':
+                    table_end = True
+                    break
+                
+                #Within the table and excluding non needed lines append to list
+                elif table_start and not table_end and line != '' and line != '----------------------':
+                    table_lines.append(line)
+
+                else:
+                    print('Loewdin Atomic Charges not found')
+
+            table_data = [line.split(':') for line in table_lines]
+            df = pd.DataFrame(table_data, columns = ['Atom', 'Loewdin Charge'])
+            print(df.to_string(index = False))
 
 
 #Main function
@@ -106,6 +142,8 @@ def main():
             ORCAFileProcessor.plot_geometry_optimization_steps(file_path)
         elif task_choice == '3':
             ORCAFileProcessor.get_molecular_orbital_energies(file_path)
+        elif task_choice == '4':
+            ORCAFileProcessor.get_loewdin_charges(file_path)
 
 #Run main
 if __name__ == '__main__':
