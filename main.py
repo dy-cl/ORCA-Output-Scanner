@@ -13,8 +13,10 @@ class Menu:
         print('2. N/A')
         print('3. N/A')
         print('4. N/A')
+        print('\n')
 
         choice = input('Enter Choice (1 - 4): ')
+        print('\n')
         return choice
 
     #Select ORCA task
@@ -25,8 +27,10 @@ class Menu:
         print('2. Geometry Optimization Step Plot')
         print('3. Final Molecular Orbital Energies')
         print('4. Loewdin Atomic Charges')
+        print('\n')
 
         choice = input('Enter Choice (1 - 4): ')
+        print('\n')
         return choice
 
 
@@ -95,43 +99,34 @@ class ORCAFileProcessor:
     @staticmethod
     def get_loewdin_charges(file_path):
         with open(file_path, 'r') as file:
+            file_contents = file.read()
 
-            file_contents = file.readlines()
-            table_start = False
-            table_end = False
-            table_lines = []
+            #Find the last occurrence of the table
+            last_table_start = file_contents.rfind('LOEWDIN ATOMIC CHARGES')
+            last_table_end = file_contents.find('-------------------------------', last_table_start)
 
-            for i, line in enumerate(file_contents):
-                line = line.strip()
+            if last_table_start == -1 or last_table_end == -1:
+                print('No "Loewdin Charges" table found.')
+                return
 
-                #Find the start of the table
-                if line == 'LOEWDIN ATOMIC CHARGES' and file_contents[i+1].strip() == '----------------------':
-                    table_start = True
-                    continue
-                
-                #Check for the end of the table
-                elif line == '-------------------------------':
-                    table_end = True
-                    break
-                
-                #Within the table and excluding non needed lines append to list
-                elif table_start and not table_end and line != '' and line != '----------------------':
-                    table_lines.append(line)
+            #Extract the table contents
+            table_contents = file_contents[last_table_start:last_table_end]
 
-                else:
-                    print('Loewdin Atomic Charges not found')
+            #Process the table
+            table_lines = table_contents.strip().split('\n')[2:]  # Remove header and footer lines
 
             table_data = [line.split(':') for line in table_lines]
-            df = pd.DataFrame(table_data, columns = ['Atom', 'Loewdin Charge'])
-            print(df.to_string(index = False))
+            df = pd.DataFrame(table_data, columns=['Atom', 'Loewdin Charge'])
+            print(df.to_string(index=False))
 
 
 #Main function
 def main():
-    file_path = '/home/dylan/Python Projects/ORCA File Scanner/benzyne.txt'
+
+    ### CHANGE FILE HERE ###
+    file_path = '/home/dylan/Python Projects/ORCA File Scanner/trans13bd.txt'
     menu = Menu()
-    software_choice = menu.select_file_type()
-    print('Your Choice is ' + software_choice + '\n')
+    software_choice = menu.select_file_type() 
 
     if software_choice == '1':
         task_choice = menu.select_orca_task()
