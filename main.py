@@ -27,9 +27,10 @@ class Menu:
         print('2. Geometry Optimization Step Plot')
         print('3. Final Molecular Orbital Energies')
         print('4. Loewdin Atomic Charges')
+        print('5. Vibrational Frequencies')
         print('\n')
 
-        choice = input('Enter Choice (1 - 4): ')
+        choice = input('Enter Choice (1 - 5): ')
         print('\n')
         return choice
 
@@ -119,6 +120,57 @@ class ORCAFileProcessor:
             df = pd.DataFrame(table_data, columns=['Atom', 'Loewdin Charge'])
             print(df.to_string(index=False))
 
+    #Get IR Spectrum (Vibrational Frequencies) and plot
+    @staticmethod
+    def get_vibrational_frequencies(file_path):
+        with open(file_path, 'r') as file:
+            file_contents = file.read()
+
+            #Find the start of the table
+            table_start = file_contents.find('cm**-1   L/(mol*cm) km/mol    a.u.')
+
+            if table_start == -1:
+                print('Table not found.')
+                return
+
+            #Find the end of the table
+            table_end = file_contents.find('* The epsilon (eps) is given for a Dirac delta lineshape.', table_start)
+
+            if table_end == -1:
+                print('End of table not found.')
+                return
+
+            #Extract table contents and process
+            table_contents = file_contents[table_start:table_end]
+            table_lines = table_contents.strip().split('\n')[2:]
+            data = [item for item in table_lines if item]
+            data = [string.strip() for string in data]
+
+            extracted_data = []
+
+            #Sort values into columns
+            for item in data:
+                values = [
+                    str(item[0:5]),
+                    float(item[6:14]),
+                    float(item[15:26]),
+                    float(item[27:32]),
+                    float(item[33:42]),
+                    float(item[45:54]),
+                    float(item[55:64]),
+                    float(item[65:73])
+                ]
+
+                extracted_data.append(values)
+
+            df = pd.DataFrame(extracted_data, columns = ["Mode", "Frequency", "eps", "Intensity", "T**2", "TX", "TY", "TZ"])
+            print(df)
+
+            plt.plot( df['Frequency'], df['Intensity'])
+            plt.gca().invert_yaxis()
+            plt.show()
+        
+
 
 #Main function
 def main():
@@ -139,6 +191,8 @@ def main():
             ORCAFileProcessor.get_molecular_orbital_energies(file_path)
         elif task_choice == '4':
             ORCAFileProcessor.get_loewdin_charges(file_path)
+        elif task_choice == '5':
+            ORCAFileProcessor.get_vibrational_frequencies(file_path)
 
 #Run main
 if __name__ == '__main__':
