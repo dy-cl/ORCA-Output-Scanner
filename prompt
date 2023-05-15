@@ -1,14 +1,24 @@
 from matplotlib import pyplot as plt
 import numpy as np
 
-#Menu wrapper function to reuse
-def select_from_menu(options):
-    for i, option in enumerate(options, 1):
-        print(f"{i}. {option}")
-    choice = int(input("Enter choice: "))
-    if choice not in range(1, len(options) + 1):
-        print("Invalid choice. Please try again.")
-        return select_from_menu(options)
+#Select file type
+def select_file_type():
+    print('Select File Type:')
+    print('1. ORCA')
+    print('2. N/A')
+    print('3. N/A')
+    print('4. N/A')
+
+    choice = input('Enter Choice (1 - 4): ')
+    return choice
+
+#Select ORCA task
+def select_orca_task():
+    print('Select Task:')
+    print('1. Final Single Point Energy')
+    print('2. Geometry Optimization Steps')
+
+    choice = input('Enter Choice (1 - 2): ')
     return choice
 
 #Get the final single point energy from ORCA file
@@ -39,16 +49,12 @@ def plot_geometry_optimization_steps(file_path):
 
 #Main function
 def main():
-    file_types = ["ORCA", "N/A", "N/A", "N/A"]
-    orca_tasks = ["Final Single Point Energy", "Geometry Optimization Steps"]
+    file_path = '/home/dylan/Python Projects/ORCA File Scanner/benzyne.txt'
+    software_choice = select_file_type()
+    print('Your Choice is ' + software_choice + '\n')
 
-    print("Select File Type:")
-    file_choice = select_from_menu(file_types)
-
-    if file_choice == '1':
-        print("Select Task:")
-        task_choice = select_from_menu(orca_tasks)
-        file_path = input("Enter the file path: ")
+    if software_choice == '1':
+        task_choice = select_orca_task()
 
         if task_choice == '1':
             get_final_single_point_energy(file_path)
@@ -58,3 +64,5 @@ def main():
 # Run the main function
 if __name__ == '__main__':
     main()
+
+What are some good optimisations for this file?
