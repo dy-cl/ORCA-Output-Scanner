@@ -164,10 +164,11 @@ class ORCAFileProcessor:
                 extracted_data.append(values)
 
             df = pd.DataFrame(extracted_data, columns = ["Mode", "Frequency", "eps", "Intensity", "T**2", "TX", "TY", "TZ"])
-            print(df)
+            print(df.to_string(index = False))
 
             plt.plot( df['Frequency'], df['Intensity'])
             plt.gca().invert_yaxis()
+            plt.gca().invert_xaxis()
             plt.show()
         
 
@@ -176,7 +177,7 @@ class ORCAFileProcessor:
 def main():
 
     ### CHANGE FILE HERE ###
-    file_path = '/home/dylan/Python Projects/ORCA File Scanner/trans13bd.txt'
+    file_path = '/home/dylan/scanner_test_files/benzene.txt'
     menu = Menu()
     software_choice = menu.select_file_type() 
 
