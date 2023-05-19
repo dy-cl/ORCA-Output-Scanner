@@ -4,6 +4,7 @@ import pandas as pd
 import os 
 import re
 
+#Menu Class
 class Menu:
     #Select file type
     @staticmethod
@@ -28,13 +29,14 @@ class Menu:
         print('3. Final Molecular Orbital Energies')
         print('4. Loewdin Atomic Charges')
         print('5. Vibrational Frequencies')
+        print('6. 1H NMR Values and Spectrum')
         print('\n')
 
         choice = input('Enter Choice (1 - 5): ')
         print('\n')
         return choice
 
-
+#ORCA Class
 class ORCAFileProcessor:
     #Get the final single point energy from ORCA file
     @staticmethod
@@ -55,17 +57,25 @@ class ORCAFileProcessor:
     #Get the geometry optimization steps from ORCA file and plot the energies
     @staticmethod
     def plot_geometry_optimization_steps(file_path):
+
         energies = []
+        geometry_opt = False
 
         with open(file_path, 'r') as file:
             for line in file:
                 if 'FINAL SINGLE POINT ENERGY' in line:
                     energies.append(float(line.split()[-1].strip()))
 
-        plt.plot(range(len(energies)), energies) #Plot Geometry Optimization steps
-        plt.xlabel('Step')
-        plt.ylabel('Energy / Ha')
-        plt.show()
+        if len(energies) == 1:
+            print('Geometry Optimization Energies not found')
+        else:
+            geometry_opt = True
+        
+        if geometry_opt == True:
+            plt.plot(range(len(energies)), energies) #Plot Geometry Optimization steps
+            plt.xlabel('Step')
+            plt.ylabel('Energy / Ha')
+            plt.show()
 
 
     #Get the molecular orbital energies from ORCA file
@@ -94,7 +104,6 @@ class ORCAFileProcessor:
             print(df)
         else:
             print('Orbital energies table not found in the file.')
-
 
     #Get Lowedin Atomic Charges
     @staticmethod
@@ -129,22 +138,17 @@ class ORCAFileProcessor:
             #Find the start of the table
             table_start = file_contents.find('cm**-1   L/(mol*cm) km/mol    a.u.')
 
-            if table_start == -1:
-                print('Table not found.')
-                return
-
             #Find the end of the table
             table_end = file_contents.find('* The epsilon (eps) is given for a Dirac delta lineshape.', table_start)
 
-            if table_end == -1:
-                print('End of table not found.')
+            if table_start == -1 or table_end == -1:
+                print('Vibrational Frequency table not found.')
                 return
 
             #Extract table contents and process
             table_contents = file_contents[table_start:table_end]
             table_lines = table_contents.strip().split('\n')[2:]
-            data = [item for item in table_lines if item]
-            data = [string.strip() for string in data]
+            data = [item.strip() for item in table_lines if item]
 
             extracted_data = []
 
@@ -171,13 +175,56 @@ class ORCAFileProcessor:
             plt.gca().invert_xaxis()
             plt.show()
         
+    #Get 1H NMR Values (Isotropic Chemical Shift) and plot
+    @staticmethod
+    def get_1h_nmr(file_path):
+        with open(file_path, 'r') as file:
+            file_contents = file.read()
 
+            #Find table
+            table_start = file_contents.find('Nucleus  Element    Isotropic     Anisotropy')
+            table_end = file_contents.find('Maximum memory used throughout the entire EPRNMR-calculation:')
+            if table_start == -1 or table_end == -1:
+                print('NMR table not found.')
+                return
+            
+            #Extract table contents and process
+            table_contents = file_contents[table_start:table_end]
+            table_lines = table_contents.strip().split('\n')[2:]
+            data = [item.strip() for item in table_lines if item]
+
+            #Extract only the 1H NMR values
+            nmr_h_values = [value.split() for value in data if value.split()[1] == "H"]
+            h_df = pd.DataFrame(nmr_h_values, columns=["Nucleus", "Element", "Isotropic", "Anisotropy"])
+
+            #Adjust for TMS shielding and print
+            TMS_shielding = 32.8527 #This can be changed according to level of theory and basis set, add automatic selection in future
+            h_df['Isotropic'] = TMS_shielding - h_df['Isotropic'].astype(float)
+            print(h_df)
+            
+            #Set baseline of zero
+            x_range = np.linspace(0, 12, 1000)
+            y_zeros = np.linspace(0, 0, 1000)
+            
+            #Append h_df isotropic values to x_range and y_baseline
+            x_combined = np.concatenate([x_range, h_df['Isotropic']])
+            y_combined = np.concatenate([y_zeros, np.ones(len(h_df))])
+
+            #Create DataFrame with combined values
+            h_nmr_df = pd.DataFrame({'ppm': x_combined, 'Intensity': y_combined}) #Not actually a legitamite way of calculating intensity
+            h_nmr_df = h_nmr_df.sort_values(by = 'ppm')
+        
+            #Plot 1H NMR Spectrum
+            plt.plot(h_nmr_df['ppm'], h_nmr_df['Intensity'])
+            plt.xlabel('Isotropic')
+            plt.ylabel('Baseline')
+            plt.show()
 
 #Main function
 def main():
 
     ### CHANGE FILE HERE ###
-    file_path = '/home/dylan/scanner_test_files/benzene.txt'
+    file_path = '/home/dylan/Documents/scanner_test_files/benzenenmr.txt'
     menu = Menu()
     software_choice = menu.select_file_type() 
 
@@ -194,6 +241,8 @@ def main():
             ORCAFileProcessor.get_loewdin_charges(file_path)
         elif task_choice == '5':
             ORCAFileProcessor.get_vibrational_frequencies(file_path)
+        elif task_choice == '6':
+            ORCAFileProcessor.get_1h_nmr(file_path)
 
 #Run main
 if __name__ == '__main__':
