@@ -2,40 +2,19 @@ from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
 import os 
-import re
 
-#Menu Class
-class Menu:
-    #Select file type
-    @staticmethod
-    def select_file_type():
-        print('Select File Type:')
-        print('1. ORCA')
-        print('2. N/A')
-        print('3. N/A')
-        print('4. N/A')
-        print('\n')
+#Menu wrapper function to reuse
+def select_from_menu(options):
+    for i, option in enumerate(options, 1):
+        print(f"{i}. {option}")
+    choice = int(input("Enter choice: "))
 
-        choice = input('Enter Choice (1 - 4): ')
-        print('\n')
-        return choice
-
-    #Select ORCA task
-    @staticmethod
-    def select_orca_task():
-        print('Select Task:')
-        print('1. Final Single Point Energy')
-        print('2. Geometry Optimization Step Plot')
-        print('3. Final Molecular Orbital Energies')
-        print('4. Loewdin Atomic Charges')
-        print('5. Vibrational Frequencies')
-        print('6. 1H NMR Values and Spectrum')
-        print('\n')
-
-        choice = input('Enter Choice (1 - 5): ')
-        print('\n')
-        return choice
-
+    if choice not in range(1, len(options) + 1):
+        print("Invalid choice. Please try again.")
+        return select_from_menu(options)
+    
+    return choice
+  
 #ORCA Class
 class ORCAFileProcessor:
     #Get the final single point energy from ORCA file
@@ -221,27 +200,33 @@ class ORCAFileProcessor:
 
 #Main function
 def main():
+    file_types = ["ORCA", "N/A", "N/A", "N/A"]
+    orca_tasks = ["Final Single Point Energy", "Geometry Optimization Steps", "Molecular Orbital Energies", "Loewdin Atomic Charges",
+                 "Vibrational Frequencies", "1H NMR"]
 
-    ### CHANGE FILE HERE ###
-    file_path = '/home/dylan/Documents/scanner_test_files/benzenenmr.txt'
-    menu = Menu()
-    software_choice = menu.select_file_type() 
+    print("Select File Type:")
+    file_choice = select_from_menu(file_types)
 
-    if software_choice == '1':
-        task_choice = menu.select_orca_task()
+    if file_choice == 1:
+        print("Select Task:")
+        task_choice = select_from_menu(orca_tasks)
+        file_path = input("Enter the file path: ")
 
-        if task_choice == '1':
+        if task_choice == 1:
             ORCAFileProcessor.get_final_single_point_energy(file_path)
-        elif task_choice == '2':
+        elif task_choice == 2:
             ORCAFileProcessor.plot_geometry_optimization_steps(file_path)
-        elif task_choice == '3':
+        elif task_choice == 3:
             ORCAFileProcessor.get_molecular_orbital_energies(file_path)
-        elif task_choice == '4':
+        elif task_choice == 4:
             ORCAFileProcessor.get_loewdin_charges(file_path)
-        elif task_choice == '5':
+        elif task_choice == 5:
             ORCAFileProcessor.get_vibrational_frequencies(file_path)
-        elif task_choice == '6':
+        elif task_choice == 6:
             ORCAFileProcessor.get_1h_nmr(file_path)
+        else:
+            print("Invalid choice. Please try again.")
+   
 
 #Run main
 if __name__ == '__main__':
