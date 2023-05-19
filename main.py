@@ -7,7 +7,10 @@ import os
 def select_from_menu(options):
     for i, option in enumerate(options, 1):
         print(f"{i}. {option}")
+    
+    print('\n')
     choice = int(input("Enter choice: "))
+    print('\n')
 
     if choice not in range(1, len(options) + 1):
         print("Invalid choice. Please try again.")
