@@ -53,7 +53,6 @@ class ORCAFileProcessor:
         else:
             print('Final Single Point Energy: Not Found')
 
-
     #Get the geometry optimization steps from ORCA file and plot the energies
     @staticmethod
     def plot_geometry_optimization_steps(file_path):
